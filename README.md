@@ -1,4 +1,4 @@
-# -BankCompleteBack
+# BankCompleteBack
 
 At shell 1- 
 <p> 
@@ -9,7 +9,7 @@ At shell 1-
 
 At shell 2-
 <p>
-  dotnet ef database update
+  <li>dotnet ef database update</li>
 </p>
 
 Finally, Open VS 2022, and run 'back' profile
