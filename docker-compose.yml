@@ -1,0 +1,17 @@
+﻿version: "3"
+services:
+  ufc-postgres:
+    image: postgres:13-alpine
+    container_name: bank-postgres
+    environment:
+      - POSTGRES_DATABASE=BankDb
+      - POSTGRES_USER=sa
+      - POSTGRES_PASSWORD=12345667
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-bank-data:/data/db
+    restart: on-failure
+
+volumes:
+  postgres-bank-data:
