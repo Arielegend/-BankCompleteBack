@@ -8,6 +8,7 @@ namespace back.Services.ClientService
     {
         private const int ALLOWED_MESSAGES = 5;
         private const int TIME_FRAME = 5;
+
         private readonly DataContext _dataContext;
         private readonly ILogger<ClientService> _logger;
 
@@ -157,7 +158,11 @@ namespace back.Services.ClientService
                 clientSending.ClientSendingRecords = newRecordsListString;
                 await _dataContext.SaveChangesAsync();
             }
-            _logger.LogError($"ClientService -- UpdateClientSending -- Couldn't find client");
+            else
+            {
+                _logger.LogError($"ClientService -- UpdateClientSending -- Couldn't find client");
+
+            }
         }
 
         // UpdateClientReceiving ->

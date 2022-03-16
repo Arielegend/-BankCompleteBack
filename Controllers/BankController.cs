@@ -13,6 +13,7 @@ namespace back.Controllers
     {
         private readonly IClientService _clientService;
         private readonly ILogger<BankController> _logger;
+        private static object Lock = new object();
 
         public BankController(IClientService clientService, ILogger<BankController> logger)
         {
@@ -70,43 +71,43 @@ namespace back.Controllers
 
 
         [HttpPost("Deposit")]
-        public async Task<DepositResponse> Deposit([FromBody] DepositRequest request)
+        public DepositResponse Deposit([FromBody] DepositRequest request)
         {
-
             var response = new DepositResponse();
-            var canClientSend = await _clientService.CanClientSend(request.RequestingClientThread);
-
-            if (canClientSend)
+            lock (Lock)
             {
-                // Client can send ->
-                //              Handling deposit
-                //              Returning response with amount to be added
-                var amount = await _clientService.HandleDeposit(request);
-                response.Amount = amount;
-
-                if (amount == -1)
+                var canClientSend =  _clientService.CanClientSend(request.RequestingClientThread);
+                if (canClientSend.Result)
                 {
-                    // Amount will be -1 in case we FAILED to update Sending || Receiving client.
-                    response.ReturnStatus = ReturnStatuses.Error;
-                    _logger.LogError($"BankController -- Deposit -- {request.RequestingClientThread} " +
-                                     $"deposit {request.Amount} to client number {request.ClientId} -- FAILED");
+                    // Client can send ->
+                    //              Handling deposit
+                    //              Returning response with amount to be added
+                    var amount =  _clientService.HandleDeposit(request);
+                    response.Amount = amount.Result;
+
+                    if (amount.Result == -1)
+                    {
+                        // Amount will be -1 in case we FAILED to update Sending || Receiving client.
+                        response.ReturnStatus = ReturnStatuses.Error;
+                        _logger.LogError($"BankController -- Deposit -- {request.RequestingClientThread} " +
+                                         $"deposit {request.Amount} to client number {request.ClientId} -- FAILED");
+                    }
+                    else
+                    {
+                        // In case amount is no -1, than updating Sending && Receiving client done successfully. 
+                        response.ReturnStatus = ReturnStatuses.Success;
+                        _logger.LogInformation($"BankController -- Deposit -- {request.RequestingClientThread} " +
+                                               $"deposit {request.Amount} to client number {request.ClientId}");
+                    }
                 }
                 else
                 {
-                    // In case amount is no -1, than updating Sending && Receiving client done successfully. 
-                    response.ReturnStatus = ReturnStatuses.Success;
-                    _logger.LogInformation($"BankController -- Deposit -- {request.RequestingClientThread} " +
-                                           $"deposit {request.Amount} to client number {request.ClientId}");
+                    // Client can NOT send ->
+                    //              returning ErrorTooManyRequests
+                    response.ReturnStatus = ReturnStatuses.ErrorTooManyRequests;
+                    _logger.LogError($"BankController -- Deposit -- Too many request by {request.RequestingClientThread}");
                 }
             }
-            else
-            {
-                // Client can NOT send ->
-                //              returning ErrorTooManyRequests
-                response.ReturnStatus = ReturnStatuses.ErrorTooManyRequests;
-                _logger.LogError($"BankController -- Deposit -- Too many request by {request.RequestingClientThread}");
-            }
-
             return response;
         }
     }

@@ -1,4 +1,5 @@
 global using back.Data;
+using System.Xml.XPath;
 using back.Services.ClientService;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -12,7 +13,6 @@ builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
 
 
-
 builder.Services.AddDbContext<DataContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -20,6 +20,7 @@ builder.Services.AddDbContext<DataContext>(options =>
 });
 
 builder.Services.AddTransient<IClientService, ClientService>();
+
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
